@@ -1,0 +1,33 @@
+{
+  "name": "opencode-buddy",
+  "version": "0.1.0",
+  "description": "A virtual ASCII pet companion that lives in a tmux side pane while you code with opencode.",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "opencode-buddy": "bin/opencode-buddy.js"
+  },
+  "scripts": {
+    "start": "node bin/opencode-buddy.js start",
+    "hatch": "node bin/opencode-buddy.js hatch",
+    "stats": "node bin/opencode-buddy.js stats",
+    "test": "node test/smoke.js"
+  },
+  "keywords": [
+    "opencode",
+    "tmux",
+    "pet",
+    "tamagotchi",
+    "ascii",
+    "tui",
+    "companion",
+    "buddy"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
