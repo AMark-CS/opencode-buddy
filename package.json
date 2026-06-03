@@ -1,6 +1,6 @@
 {
   "name": "opencode-buddy",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A virtual ASCII pet companion for opencode. Works as a tmux sidecar or an in-TUI /buddy slash command.",
   "type": "module",
   "main": "src/plugin.js",
