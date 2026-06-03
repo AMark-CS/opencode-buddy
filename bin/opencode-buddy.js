@@ -3,6 +3,7 @@
 // interactive TUI renderer.
 
 import { runInteractive, runCommand } from "../src/index.js";
+import { install, uninstall } from "../src/install.js";
 
 const argv = process.argv.slice(2);
 const [sub, ...rest] = argv;
@@ -21,6 +22,16 @@ async function main() {
   if (sub === "render") {
     // Re-entered inside the tmux side pane by `start`. Just render.
     await runInteractive({ autoSplit: false });
+    return;
+  }
+
+  if (sub === "install") {
+    await install();
+    return;
+  }
+
+  if (sub === "uninstall") {
+    await uninstall();
     return;
   }
 

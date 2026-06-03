@@ -6,3 +6,10 @@ node_modules/
 dist/
 .cache/
 coverage/
+package-lock.json
+
+# Never commit user opencode configs (may contain API keys)
+opencode.json
+.opencode/
+~/.config/opencode/
+

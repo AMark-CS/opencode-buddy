@@ -1,33 +1,60 @@
 {
   "name": "opencode-buddy",
-  "version": "0.1.0",
-  "description": "A virtual ASCII pet companion that lives in a tmux side pane while you code with opencode.",
+  "version": "0.2.0",
+  "description": "A virtual ASCII pet companion for opencode. Works as a tmux sidecar or an in-TUI /buddy slash command.",
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/plugin.js",
+  "exports": {
+    ".": "./src/plugin.js",
+    "./cli": "./bin/opencode-buddy.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "opencode-buddy": "bin/opencode-buddy.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node bin/opencode-buddy.js start",
     "hatch": "node bin/opencode-buddy.js hatch",
     "stats": "node bin/opencode-buddy.js stats",
-    "test": "node test/smoke.js"
+    "install-buddy": "node bin/opencode-buddy.js install",
+    "test": "node --test test/smoke.js test/plugin.smoke.js",
+    "test:e2e": "node test/e2e.js"
   },
   "keywords": [
     "opencode",
+    "opencode-plugin",
     "tmux",
     "pet",
     "tamagotchi",
     "ascii",
     "tui",
     "companion",
-    "buddy"
+    "buddy",
+    "virtual-pet"
   ],
   "engines": {
     "node": ">=18"
   },
-  "author": "",
+  "author": "AMark-CS",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AMark-CS/opencode-buddy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AMark-CS/opencode-buddy/issues"
+  },
+  "homepage": "https://github.com/AMark-CS/opencode-buddy#readme",
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.15.13"
+  }
 }
