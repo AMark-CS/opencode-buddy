@@ -16,6 +16,16 @@ export async function load() {
   }
 }
 
+export async function mtime() {
+  try {
+    const st = await fs.stat(FILE);
+    return st.mtimeMs;
+  } catch (err) {
+    if (err.code === "ENOENT") return 0;
+    throw err;
+  }
+}
+
 export async function save(state) {
   await fs.mkdir(DIR, { recursive: true });
   const tmp = FILE + ".tmp";

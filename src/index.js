@@ -55,10 +55,14 @@ export async function runInteractive({ autoSplit = true } = {}) {
   let state = await loadOrInit();
   let buddyPane = null;
   if (autoSplit) {
-    buddyPane = splitRight(
+    // The `start` subcommand: split a side pane that runs `render`,
+    // then exit so this main-pane process goes back to the shell prompt.
+    // The render process owns the TUI; we just kick it off.
+    splitRight(
       `cd ${process.cwd()} && exec ${process.execPath} ${process.argv[1]} render`,
       28,
     );
+    return;
   }
 
   const tui = createTui({
@@ -134,11 +138,36 @@ export async function runInteractive({ autoSplit = true } = {}) {
   let lastActivity = "unknown";
   let lastPoll = 0;
   let lastSave = 0;
+  let lastReload = 0;
+  let lastKnownMtime = 0;
   let running = true;
 
   async function loop() {
     while (running) {
       const now = Date.now();
+
+      // 0. Reload from disk every 1.5s so the side pane picks up
+      //    changes made by other processes (opencode plugin, headless
+      //    CLI invocations from the main pane, etc.). Use mtime to
+      //    detect external writes — lastTick is not a reliable
+      //    signal because tick() rewrites it every loop.
+      if (now - lastReload > 1500) {
+        lastReload = now;
+        const mt = await persistence.mtime();
+        if (mt > 0 && mt !== lastKnownMtime) {
+          lastKnownMtime = mt;
+          const onDisk = await persistence.load();
+          if (onDisk) {
+            // Preserve in-memory transient state overrides
+            const transient = {
+              state: state.state,
+              stateUntil: state.stateUntil,
+              stateReason: state.stateReason,
+            };
+            state = { ...onDisk, ...transient };
+          }
+        }
+      }
 
       // 1. tick attributes for time decay
       state = tick(state, now);
@@ -170,6 +199,7 @@ export async function runInteractive({ autoSplit = true } = {}) {
       if (now - lastSave > SAVE_EVERY_MS) {
         lastSave = now;
         await persistence.save(state).catch(() => {});
+        lastKnownMtime = await persistence.mtime();
       }
 
       await new Promise((r) => setTimeout(r, TICK_MS));

@@ -58,6 +58,7 @@ export function feed(state) {
     hunger: CLAMP(state.hunger + 25),
     energy: CLAMP(state.energy - 5),
     lastFed: Date.now(),
+    lastTick: Date.now(),
   };
 }
 
@@ -68,6 +69,7 @@ export function play(state) {
     energy: CLAMP(state.energy - 10),
     hunger: CLAMP(state.hunger - 5),
     lastPlayed: Date.now(),
+    lastTick: Date.now(),
     xp: state.xp + 5,
   };
 }
@@ -76,15 +78,20 @@ export function rest(state) {
   return {
     ...state,
     energy: CLAMP(state.energy + 30),
+    lastTick: Date.now(),
   };
 }
 
 export function rename(state, name) {
-  return { ...state, name: String(name).slice(0, 20) };
+  return {
+    ...state,
+    name: String(name).slice(0, 20),
+    lastTick: Date.now(),
+  };
 }
 
 export function switchSpecies(state, species) {
-  return { ...state, species };
+  return { ...state, species, lastTick: Date.now() };
 }
 
 export function celebrate(state, durationMs = 4000) {
