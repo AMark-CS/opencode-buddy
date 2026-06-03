@@ -16,6 +16,13 @@ export async function load() {
   }
 }
 
+export async function save(state) {
+  await fs.mkdir(DIR, { recursive: true });
+  const tmp = FILE + ".tmp";
+  await fs.writeFile(tmp, JSON.stringify(state, null, 2));
+  await fs.rename(tmp, FILE);
+}
+
 export async function mtime() {
   try {
     const st = await fs.stat(FILE);
@@ -24,13 +31,6 @@ export async function mtime() {
     if (err.code === "ENOENT") return 0;
     throw err;
   }
-}
-
-export async function save(state) {
-  await fs.mkdir(DIR, { recursive: true });
-  const tmp = FILE + ".tmp";
-  await fs.writeFile(tmp, JSON.stringify(state, null, 2));
-  await fs.rename(tmp, FILE);
 }
 
 export function pathForDisplay() {

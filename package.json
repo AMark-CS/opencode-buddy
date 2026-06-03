@@ -1,42 +1,30 @@
 {
   "name": "opencode-buddy",
-  "version": "0.2.1",
-  "description": "A virtual ASCII pet companion for opencode. Works as a tmux sidecar or an in-TUI /buddy slash command.",
+  "version": "0.3.0",
+  "description": "A virtual ASCII pet companion that lives in the opencode TUI sidebar. Hatches, feeds, plays, and reacts to what you're coding.",
   "type": "module",
-  "main": "src/plugin.js",
+  "main": "src/server-plugin.js",
   "exports": {
-    ".": "./src/plugin.js",
-    "./cli": "./bin/opencode-buddy.js",
+    ".": "./src/server-plugin.js",
+    "./tui": "./src/tui-plugin.jsx",
     "./package.json": "./package.json"
   },
-  "bin": {
-    "opencode-buddy": "bin/opencode-buddy.js"
-  },
   "files": [
-    "bin",
     "src",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "start": "node bin/opencode-buddy.js start",
-    "hatch": "node bin/opencode-buddy.js hatch",
-    "stats": "node bin/opencode-buddy.js stats",
-    "install-buddy": "node bin/opencode-buddy.js install",
-    "test": "node --test test/smoke.js test/plugin.smoke.js",
-    "test:e2e": "node test/e2e.js"
-  },
   "keywords": [
     "opencode",
     "opencode-plugin",
-    "tmux",
+    "tui",
     "pet",
     "tamagotchi",
     "ascii",
-    "tui",
     "companion",
     "buddy",
-    "virtual-pet"
+    "virtual-pet",
+    "sidebar"
   ],
   "engines": {
     "node": ">=18"
