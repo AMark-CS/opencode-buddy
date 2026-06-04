@@ -27,27 +27,27 @@ const C = {
 const FRAMES = {
   duck: {
     idle: [
-      // frame 0: blink open
+      // frame 0: bob up, blink open
       [
-        `         __         `,
+        `         __   ~     `,
         `       <(o )___     `,
         `        ( ._> /     `,
         `         \`--'       `,
         `                    `,
         `      ~ idle ~      `,
       ],
-      // frame 1: blink closed
+      // frame 1: bob up, blink closed
       [
-        `         __         `,
+        `         __    ~    `,
         `       <(- )___     `,
         `        ( ._> /     `,
         `         \`--'       `,
         `                    `,
         `      ~ idle ~      `,
       ],
-      // frame 2: blink open (same as 0, ends loop)
+      // frame 2: same as 0
       [
-        `         __         `,
+        `         __   ~     `,
         `       <(o )___     `,
         `        ( ._> /     `,
         `         \`--'       `,
@@ -80,19 +80,19 @@ const FRAMES = {
         `         __         `,
         `       <(O )___     `,
         `        ( ._> /     `,
-        `         \`--'   !!  `,
-        `                    `,
-        `      !!  oh no     `,
+        `         \`--'       `,
+        `      !!  !!        `,
+        `      ! quack       `,
       ],
     ],
     sleeping: [
       [
         `         __         `,
-        `       <(o )___     `,
-        `        ( -_> z     `,
-        `         \`--'   z   `,
-        `                    `,
-        `    z z z z z       `,
+        `       <(- )___     `,
+        `        ( ._> /     `,
+        `         \`--'       `,
+        `         z          `,
+        `     z z z z        `,
       ],
     ],
   },
@@ -101,7 +101,7 @@ const FRAMES = {
     idle: [
       [
         `    /\\_/\\           `,
-        `   ( o.o )          `,
+        `   ( o.o ) ~        `,
         `    > ^ <           `,
         `   /|   |\\          `,
         `  (_|   |_)         `,
@@ -109,7 +109,7 @@ const FRAMES = {
       ],
       [
         `    /\\_/\\           `,
-        `   ( -.o )          `,
+        `   ( -.o )  ~       `,
         `    > ^ <           `,
         `   /|   |\\          `,
         `  (_|   |_)         `,
@@ -117,7 +117,7 @@ const FRAMES = {
       ],
       [
         `    /\\_/\\           `,
-        `   ( o.o )          `,
+        `   ( o.o )   ~      `,
         `    > ^ <           `,
         `   /|   |\\          `,
         `  (_|   |_)         `,
@@ -136,101 +136,104 @@ const FRAMES = {
     ],
     celebrating: [
       [
-        `    /\\_/\\           `,
-        `   ( ^.^ )   \\o/    `,
-        `    > ~ <           `,
-        `   /|   |\\  \\o/     `,
+        `    /\\_/\\    \\o/  `,
+        `   ( ^.^ )          `,
+        `    > ~ <   \\o/    `,
+        `   /|   |\\          `,
         `  (_|   |_)         `,
-        `   purrrfect!       `,
+        `   +5 xp! \\o/      `,
       ],
     ],
     scared: [
       [
-        `    /\\_/\\    !!     `,
-        `   ( O.O )          `,
+        `    /\\_/\\  !!      `,
+        `   ( O.O ) !!       `,
         `    > ^ <           `,
-        `   /|   |\\          `,
-        `  (_|   |_)  /\\     `,
+        `   /|   |\\  !!      `,
+        `  (_|   |_)         `,
         `    !! hiss         `,
       ],
     ],
     sleeping: [
       [
         `    /\\_/\\           `,
-        `   ( -.- )  z       `,
+        `   ( -.- ) z        `,
         `    > ^ <           `,
-        `   /|   |\\   z      `,
+        `   /|   |\\    z    `,
         `  (_|   |_)         `,
-        `   z z z z z        `,
+        `   z z z z          `,
       ],
     ],
   },
 
   dragon: {
     idle: [
+      // wings trailing right, tail left
       [
-        `      /\\_/\\         `,
-        `     ( o o )  ~~    `,
-        `      > ^ < /       `,
-        `     /|   |\\        `,
-        `    (_|   |_)       `,
-        `      rawr          `,
+        `    /^^\\           `,
+        `   (o o)  ~~       `,
+        `    >w<    ~       `,
+        `   /| |\\           `,
+        `  (_| |_)  ~        `,
+        `    rawr!          `,
       ],
+      // blink, wings up, tail mid
       [
-        `      /\\_/\\         `,
-        `     ( - - )  ~~    `,
-        `      > ^ < /       `,
-        `     /|   |\\        `,
-        `    (_|   |_)       `,
-        `      rawr          `,
+        `    /^^\\           `,
+        `   (- -)  ~~~      `,
+        `    >w<      ~     `,
+        `   /| |\\           `,
+        `  (_| |_)    ~      `,
+        `    rawr!          `,
       ],
+      // wings mid, tail right
       [
-        `      /\\_/\\         `,
-        `     ( o o )  ~~    `,
-        `      > ^ < /       `,
-        `     /|   |\\        `,
-        `    (_|   |_)       `,
-        `      rawr          `,
+        `    /^^\\           `,
+        `   (o o)  ~~       `,
+        `    >w<        ~   `,
+        `   /| |\\           `,
+        `  (_| |_)      ~    `,
+        `    rawr!          `,
       ],
     ],
     working: [
       [
-        `      /\\_/\\   ~~~   `,
-        `     ( o o ) ~~     `,
-        `      > ^ <         `,
-        `     /|   |\\  ~~    `,
-        `    (_|   |_)       `,
-        `    forging...      `,
+        `    /^^\\    ~~~    `,
+        `   (o o) ~~~       `,
+        `    >w<   ~~       `,
+        `   /| |\\   ~~~     `,
+        `  (_| |_)          `,
+        `   forging...      `,
       ],
     ],
     celebrating: [
       [
-        `      /\\^/\\    \\o/  `,
-        `     ( ^.^ )        `,
-        `      > ~ <    \\o/  `,
-        `     /|   |\\        `,
-        `    (_|   |_)       `,
-        `   +50 xp!! \\o/    `,
+        `    /^^\\    \\o/   `,
+        `   (^o^)            `,
+        `    >w<   \\o/      `,
+        `   /| |\\    \\o/    `,
+        `  (_| |_)           `,
+        `   ROAR! \\o/       `,
       ],
     ],
     scared: [
       [
-        `      /\\_/\\    !!   `,
-        `     ( O O )        `,
-        `      > ^ <         `,
-        `     /|   |\\   !!   `,
-        `    (_|   |_)       `,
-        `    !! yikes        `,
+        `    /^^\\    !!     `,
+        `   (O O)  !!        `,
+        `    >w<             `,
+        `   /| |\\   !!      `,
+        `  (_| |_)           `,
+        `   ! yikes          `,
       ],
     ],
     sleeping: [
       [
-        `      /\\_/\\         `,
-        `     ( - - ) z      `,
-        `      > ^ <         `,
-        `     /|   |\\   z    `,
-        `    (_|   |_)       `,
-        `   z z z z z        `,
+        `    /^^\\  z        `,
+        `   (- -)   z        `,
+        `    >w<             `,
+        `   /| |\\  z        `,
+        `  (_| |_)           `,
+        `   z z z z          `,
       ],
     ],
   },
@@ -239,7 +242,7 @@ const FRAMES = {
     idle: [
       [
         `      ^___^         `,
-        `     (o . o)        `,
+        `     (o . o)~       `,
         `    \\|_|_|/        `,
         `     \\| |/         `,
         `      ) (          `,
@@ -247,7 +250,7 @@ const FRAMES = {
       ],
       [
         `      ^___^         `,
-        `     (o - o)        `,
+        `     (o - o) ~      `,
         `    \\|_|_|/        `,
         `     \\| |/         `,
         `      ) (          `,
@@ -255,7 +258,7 @@ const FRAMES = {
       ],
       [
         `      ^___^         `,
-        `     (o . o)        `,
+        `     (o . o)  ~     `,
         `    \\|_|_|/        `,
         `     \\| |/         `,
         `      ) (          `,
@@ -315,16 +318,16 @@ const FRAMES = {
         `      beep          `,
       ],
       [
-        `     [ O . O ]      `,
+        `     [- . - ]   .   `,
         `    /|#####|\\       `,
         `   / |#####| \\      `,
         `      |     |       `,
         `     /| | | |\\      `,
-        `      beep          `,
+        `      bzzt          `,
       ],
       [
         `     [ O . O ]      `,
-        `    /|#####|\\       `,
+        `    /|#####|\\   .   `,
         `   / |#####| \\      `,
         `      |     |       `,
         `     /| | | |\\      `,
@@ -384,15 +387,15 @@ const FRAMES = {
         `      boo           `,
       ],
       [
-        `     .-""-.         `,
-        `    ( o . o )       `,
+        `     .-""-.  o      `,
+        `    ( - . - )       `,
         `    | ~  ~ |        `,
         `    |     |         `,
         `    \\uuuuu/        `,
         `      boo           `,
       ],
       [
-        `     .-""-.         `,
+        `     .-""-.   o     `,
         `    ( o . o )       `,
         `    | ~  ~ |        `,
         `    |     |         `,
@@ -529,17 +532,12 @@ export function renderFrame(species, state, frameIdx) {
   const frames = framesFor(species, state);
   const i = ((frameIdx % frames.length) + frames.length) % frames.length;
   const palette = PALETTES[species];
-  // Idle frames sway the body so the buddy feels alive even when the
-  // eyes aren't blinking. We toggle a leading-space offset that
-  // alternates with the frame so the shift is unmistakable.
-  const sway = state === "idle" ? (i % 2 === 0 ? 0 : 2) : 0;
-  // Append a frame counter to the caption row (last row) so the For
-  // reconciliation always sees different content. Helps debug whether
-  // the body re-renders at all.
-  return frames[i].map((row, rowIdx) => {
+  // Idle motion lives in the art itself (wagging tails, flapping wings,
+  // bobbing bodies) so the For reconciliation always sees new content
+  // each frame and re-renders. No whitespace trickery required.
+  return frames[i].map((row) => {
     let out = "";
     for (const ch of row) out += palette(ch);
-    if (sway > 0) out = " ".repeat(sway) + out;
     // Auto-pad to FRAME_WIDTH so off-by-one spacing in raw art doesn't
     // cause render jitter.
     const visible = out.replace(/\x1b\[[0-9;]*m/g, "").length;
