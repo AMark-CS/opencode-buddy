@@ -2,7 +2,7 @@
 
 A virtual ASCII pet companion that lives in the opencode TUI sidebar. Hatches, feeds, plays, and reacts to what you're coding — all without leaving opencode.
 
-![Demo video — the buddy in the opencode TUI sidebar](assets/buddy-demo.mp4)
+![Demo — the buddy in the opencode TUI sidebar (toast notification on the left, buddy panel on the right with hunger / happy / energy bars and a transitioning state)](assets/buddy-demo.gif)
 
 ```
 ┌──────────────────────────┐
