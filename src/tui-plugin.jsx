@@ -24,6 +24,10 @@ function View(props) {
   const [frame, setFrame] = createSignal(0)
   const [lastMtime, setLastMtime] = createSignal(0)
   const [tick, setTick] = createSignal(0)
+  // Live activity tracking — what the LLM is doing right now.
+  const [sessionStatus, setSessionStatus] = createSignal(null)
+  const [activity, setActivity] = createSignal("idle")
+  const [lastTool, setLastTool] = createSignal(null)
 
   const refresh = async () => {
     try {
@@ -71,6 +75,42 @@ function View(props) {
   const refreshTimer = setInterval(refresh, REFRESH_TICK_MS)
   onCleanup(() => clearInterval(refreshTimer))
 
+  // Poll session status for reactivity without needing event subscriptions.
+  const pollSession = () => {
+    if (!props.session_id) return
+    const status = api.state.session.status(props.session_id)
+    if (status) {
+      setSessionStatus(status.type)
+      if (status.type === "busy") {
+        // Inspect the latest message for activity type.
+        const messages = api.state.session.messages(props.session_id)
+        const last = messages[messages.length - 1]
+        if (last && last.role === "assistant") {
+          const parts = api.state.part(last.id) || []
+          const hasReasoning = parts.some((p) => p.type === "reasoning")
+          const lastToolPart = [...parts].reverse().find((p) => p.type === "tool")
+          if (hasReasoning) {
+            setActivity("thinking")
+          } else if (lastToolPart) {
+            setActivity("tool")
+            setLastTool(lastToolPart.tool ?? "tool")
+          } else {
+            setActivity("text")
+          }
+        } else {
+          setActivity("thinking")
+        }
+      } else if (status.type === "retry") {
+        setActivity("retry")
+      } else {
+        setActivity("idle")
+      }
+    }
+  }
+  pollSession()
+  const pollTimer = setInterval(pollSession, 500)
+  onCleanup(() => clearInterval(pollTimer))
+
   // Use createEffect to run a self-perpetuating animation loop. The
   // effect re-runs on every frame change, so the animation is tied to
   // the reactive system rather than setInterval. This survives slot
@@ -89,9 +129,30 @@ function View(props) {
     const v = current()
     return v ? v.species : "duck"
   }
+  // The state we actually render. Persisted state takes priority for
+  // short transient states (celebrating, scared) and the sleeping
+  // auto-state, but live activity overrides the rest so the buddy
+  // reacts to the LLM in real time.
   const buddyState = () => {
     const v = current()
-    return v ? v.state : "idle"
+    if (!v) return "idle"
+    const persisted = v.state
+    if (persisted === "celebrating" || persisted === "scared" || persisted === "sleeping") {
+      if (Date.now() < v.stateUntil) return persisted
+    }
+    const a = activity()
+    if (a === "thinking" || a === "tool" || a === "text" || a === "retry") {
+      return a === "retry" ? "scared" : a
+    }
+    return persisted === "sleeping" ? "sleeping" : "idle"
+  }
+  const activityLabel = () => {
+    const a = activity()
+    if (a === "thinking") return "thinking..."
+    if (a === "tool") return `using ${lastTool() ?? "tool"}`
+    if (a === "text") return "responding..."
+    if (a === "retry") return "retrying"
+    return buddyState()
   }
   const fc = createMemo(() => frameCount(species(), buddyState()))
   const lines = createMemo(() => renderFrame(species(), buddyState(), frame() % Math.max(1, fc())))
@@ -129,7 +190,7 @@ function View(props) {
       <text fg={theme().textMuted}>hunger {barStr(current()?.hunger ?? 0)} {Math.floor(current()?.hunger ?? 0)}</text>
       <text fg={theme().textMuted}>happy  {barStr(current()?.happiness ?? 0)} {Math.floor(current()?.happiness ?? 0)}</text>
       <text fg={theme().textMuted}>energy {barStr(current()?.energy ?? 0)} {Math.floor(current()?.energy ?? 0)}</text>
-      <text fg={theme().textMuted}>{current()?.state ?? "..."}  Lv{current()?.level ?? 1}  xp{current()?.xp ?? 0}/{(current()?.level ?? 1) * 50}</text>
+      <text fg={theme().textMuted}>{activityLabel()}  Lv{current()?.level ?? 1}  xp{current()?.xp ?? 0}/{(current()?.level ?? 1) * 50}</text>
     </box>
   )
 }
