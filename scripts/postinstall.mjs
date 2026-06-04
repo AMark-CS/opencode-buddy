@@ -13,8 +13,7 @@ import { promises as fs } from "node:fs"
 import path from "node:path"
 import os from "node:os"
 
-const SERVER_SPEC = "opencode-buddy"
-const TUI_SPEC = "opencode-buddy/tui"
+const PLUGIN_SPEC = "opencode-buddy"
 const CONFIG_DIR = path.join(os.homedir(), ".config", "opencode")
 const SERVER_CONFIG = path.join(CONFIG_DIR, "opencode.json")
 const TUI_CONFIG = path.join(CONFIG_DIR, "tui.json")
@@ -86,7 +85,7 @@ async function main() {
     file: SERVER_CONFIG,
     ...(await updateConfig({
       filepath: SERVER_CONFIG,
-      spec: SERVER_SPEC,
+      spec: PLUGIN_SPEC,
       fallback: { $schema: "https://opencode.ai/config.json" },
     })),
   })
@@ -95,7 +94,7 @@ async function main() {
     file: TUI_CONFIG,
     ...(await updateConfig({
       filepath: TUI_CONFIG,
-      spec: TUI_SPEC,
+      spec: PLUGIN_SPEC,
       fallback: { $schema: "https://opencode.ai/tui.json" },
     })),
   })

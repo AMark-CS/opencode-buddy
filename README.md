@@ -34,10 +34,12 @@ Requires opencode ≥ 1.15.
 npm install -g opencode-buddy
 ```
 
-The `postinstall` script automatically registers both plugin entrypoints in your opencode config:
+The `postinstall` script automatically registers the plugin in both config files using the same spec. opencode picks the right entrypoint from the package's `exports` field:
 
-- `opencode-buddy` → `~/.config/opencode/opencode.json` (server plugin)
-- `opencode-buddy/tui` → `~/.config/opencode/tui.json` (TUI plugin)
+- `opencode-buddy` (main) → `src/server-plugin.js` (server plugin, no-op since 0.3.x)
+- `opencode-buddy` with kind `tui` → `src/tui-plugin.jsx` (TUI plugin)
+
+Both `~/.config/opencode/opencode.json` and `~/.config/opencode/tui.json` get the same `plugin: ["opencode-buddy"]` entry.
 
 If you have those config files as JSONC (with comments), the script skips them — add the entries manually:
 
@@ -52,7 +54,7 @@ If you have those config files as JSONC (with comments), the script skips them �
 // ~/.config/opencode/tui.json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["opencode-buddy/tui"]
+  "plugin": ["opencode-buddy"]
 }
 ```
 
@@ -177,12 +179,12 @@ flowchart LR
 6. Slash commands typed in the prompt hit the keymap → buddy's `run()` → reads/writes `state.json` directly → toast feedback to the user.
 7. The view's reactive signals propagate state changes back to the sidebar render. No re-render of the TUI shell is needed.
 
-### Why two config files?
+### Why two config files with the same spec?
 
-opencode has separate plugin registries for the **server** (LLM tools, file watching) and the **TUI** (sidebar slots, slash commands, keybindings). The buddy exports both:
+opencode has separate plugin registries for the **server** (LLM tools, file watching) and the **TUI** (sidebar slots, slash commands, keybindings). When the same package spec appears in both, opencode looks at the package's `exports` field to pick the right entrypoint:
 
-- `opencode-buddy` → `src/server-plugin.js` (currently a no-op — we no longer expose an LLM tool)
-- `opencode-buddy/tui` → `src/tui-plugin.jsx` (the sidebar slot + slash commands)
+- `opencode.json` → `kind: "server"` → loads `src/server-plugin.js` via `main` (currently a no-op — we no longer expose an LLM tool)
+- `tui.json` → `kind: "tui"` → loads `src/tui-plugin.jsx` via `exports["./tui"]` (the sidebar slot + slash commands)
 
 This split lets slash commands update state instantly without round-tripping through the LLM, which is the right UX for "I want to feed my pet right now" interactions.
 
