@@ -1,58 +1,69 @@
 /** @jsxImportSource @opentui/solid */
-import type { TuiPlugin, TuiPluginApi, TuiPluginModule, TuiSlotPlugin } from "@opencode-ai/plugin/tui"
-import { createSignal, createMemo, onCleanup, Show, For } from "solid-js"
+import { createSignal, createMemo, onCleanup, For } from "solid-js"
 import * as persistence from "./persistence.js"
 import {
   tick as tickState,
   celebrate as celebrateState,
   scared as scaredState,
   deriveState,
+  feed,
+  play,
+  rest,
+  rename,
+  switchSpecies,
 } from "./state.js"
-import { renderFrame, frameCount, frameIntervalMs } from "./species.js"
+import { renderFrame, frameCount, frameIntervalMs, SPECIES } from "./species.js"
 
 const ANIMATION_TICK_MS = frameIntervalMs()
 const REFRESH_TICK_MS = 1500
 
-function View(props: { api: TuiPluginApi; session_id: string }) {
-  const theme = () => props.api.theme.current
-  const [state, setState] = createSignal<any | null>(null)
+function View(props) {
+  const api = props.api
+  const theme = () => api.theme.current
+  const [state, setState] = createSignal(null)
   const [frame, setFrame] = createSignal(0)
   const [lastMtime, setLastMtime] = createSignal(0)
+  const [tick, setTick] = createSignal(0)
 
   const refresh = async () => {
-    const mt = await persistence.mtime()
-    if (mt === 0) {
-      const fresh = {
-        species: "duck",
-        name: "Quack",
-        hunger: 80,
-        happiness: 80,
-        energy: 100,
-        xp: 0,
-        level: 1,
-        hatchedAt: Date.now(),
-        lastFed: Date.now(),
-        lastPlayed: Date.now(),
-        lastTick: Date.now(),
-        state: "idle",
-        stateUntil: 0,
-        stateReason: "",
+    try {
+      const mt = await persistence.mtime()
+      if (mt === 0) {
+        const fresh = {
+          species: "duck",
+          name: "Quack",
+          hunger: 80,
+          happiness: 80,
+          energy: 100,
+          xp: 0,
+          level: 1,
+          hatchedAt: Date.now(),
+          lastFed: Date.now(),
+          lastPlayed: Date.now(),
+          lastTick: Date.now(),
+          state: "idle",
+          stateUntil: 0,
+          stateReason: "",
+        }
+        await persistence.save(fresh)
+        setLastMtime(Date.now())
+        setState(fresh)
+        setTick(tick() + 1)
+        return
       }
-      await persistence.save(fresh)
-      setLastMtime(Date.now())
-      setState(fresh)
-      return
-    }
-    if (mt !== lastMtime()) {
-      setLastMtime(mt)
-      const onDisk = await persistence.load()
-      if (onDisk) {
-        const ticked = tickState(onDisk)
-        const derived = deriveState(ticked)
-        setState(derived)
-        // Persist derived state (so transient state changes survive)
-        persistence.save(derived).catch(() => {})
+      if (mt !== lastMtime()) {
+        setLastMtime(mt)
+        const onDisk = await persistence.load()
+        if (onDisk) {
+          const ticked = tickState(onDisk)
+          const derived = deriveState(ticked)
+          setState(derived)
+          setTick(tick() + 1)
+          persistence.save(derived).catch(() => {})
+        }
       }
+    } catch (err) {
+      console.error("[buddy] refresh error", err)
     }
   }
 
@@ -65,77 +76,199 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
   }, ANIMATION_TICK_MS)
   onCleanup(() => clearInterval(animTimer))
 
-  const s = () => state()
-  const species = () => s()?.species ?? "duck"
-  const buddyState = () => s()?.state ?? "idle"
+  const current = state
+  const species = () => {
+    const v = current()
+    return v ? v.species : "duck"
+  }
+  const buddyState = () => {
+    const v = current()
+    return v ? v.state : "idle"
+  }
   const fc = createMemo(() => frameCount(species(), buddyState()))
   const lines = createMemo(() => renderFrame(species(), buddyState(), frame() % Math.max(1, fc())))
 
-  const bar = (v: number, color: any) => {
+  const barStr = (v) => {
     const filled = Math.round((v / 100) * 10)
-    return (
-      <text>
-        <span style={{ fg: theme().success }}>{"█".repeat(filled)}</span>
-        <span style={{ fg: theme().borderSubtle }}>{"░".repeat(10 - filled)}</span>
-      </text>
-    )
+    return "|" + "\u2588".repeat(filled) + "\u2591".repeat(10 - filled) + "|"
+  }
+
+  const stripAnsi = (s) => s.replace(/\x1b\[[0-9;]*m/g, "")
+
+  const speciesColor = () => {
+    const sp = current()?.species
+    if (sp === "cat") return theme().accent
+    if (sp === "duck") return theme().success
+    if (sp === "dragon") return theme().error
+    if (sp === "axolotl") return theme().accent
+    if (sp === "robot") return theme().info
+    if (sp === "ghost") return theme().text
+    return theme().text
   }
 
   return (
-    <Show when={s()}>
-      <box flexDirection="column" paddingTop={1} paddingBottom={1}>
-        <text fg={theme().accent}>
-          <b>  {s()!.name} the {species()}</b>
-        </text>
-        <For each={lines()}>
-          {(line) => (
-            <text>
-              {"  "}
-              {line}
-            </text>
-          )}
-        </For>
-        <text fg={theme().textMuted}>  {"─".repeat(20)}</text>
-        <text>
-          {"  hunger "}
-          {bar(s()!.hunger, theme().success)}
-          {" "}
-          {Math.floor(s()!.hunger)}
-        </text>
-        <text>
-          {"  happy  "}
-          {bar(s()!.happiness, theme().accent)}
-          {" "}
-          {Math.floor(s()!.happiness)}
-        </text>
-        <text>
-          {"  energy "}
-          {bar(s()!.energy, theme().info)}
-          {" "}
-          {Math.floor(s()!.energy)}
-        </text>
-        <text fg={theme().textMuted}>
-          {"  "}
-          {buddyState()} · Lv {s()!.level} · xp {s()!.xp}/{s()!.level * 50}
-        </text>
-      </box>
-    </Show>
+    <box>
+      <text fg={theme().accent}>{current() ? current().name + " the " + current().species : "BUDDY"}</text>
+      <For each={lines()}>
+        {(line) => <text fg={speciesColor()}>{stripAnsi(line)}</text>}
+      </For>
+      <text fg={theme().textMuted}>hunger {barStr(current()?.hunger ?? 0)} {Math.floor(current()?.hunger ?? 0)}</text>
+      <text fg={theme().textMuted}>happy  {barStr(current()?.happiness ?? 0)} {Math.floor(current()?.happiness ?? 0)}</text>
+      <text fg={theme().textMuted}>energy {barStr(current()?.energy ?? 0)} {Math.floor(current()?.energy ?? 0)}</text>
+      <text fg={theme().textMuted}>{current()?.state ?? "..."}  Lv{current()?.level ?? 1}  xp{current()?.xp ?? 0}/{(current()?.level ?? 1) * 50}</text>
+    </box>
   )
 }
 
-const tui: TuiPlugin = async (api) => {
-  // Register the slot. `api` is captured in the closure so the slot
-  // function can pass it to the Solid component.
+const tui = async (api) => {
   api.slots.register({
-    order: 500,
+    order: 50,
     slots: {
       sidebar_content(_ctx, props) {
         return <View api={api} session_id={props.session_id} />
       },
     },
-  } as TuiSlotPlugin)
+  })
 
-  // React to opencode session events
+  const feedBuddy = async () => {
+    const s = await persistence.load()
+    if (!s) return
+    const next = feed(s)
+    await persistence.save(next)
+    api.ui.toast({ variant: "success", title: "Yum!", message: `${next.name} ate a snack.` })
+  }
+  const playBuddy = async () => {
+    const s = await persistence.load()
+    if (!s) return
+    const next = play(s)
+    await persistence.save(next)
+    api.ui.toast({ variant: "success", title: "Woohoo!", message: `${next.name} played (+5xp).` })
+  }
+  const restBuddy = async () => {
+    const s = await persistence.load()
+    if (!s) return
+    const next = rest(s)
+    await persistence.save(next)
+    api.ui.toast({ variant: "info", title: "Zzz", message: `${next.name} is napping.` })
+  }
+  const statusBuddy = async () => {
+    const s = await persistence.load()
+    if (!s) return
+    api.ui.toast({
+      variant: "info",
+      title: `${s.name} the ${s.species}`,
+      message: `Lv${s.level} xp${s.xp}/${s.level * 50} - hunger ${Math.floor(s.hunger)} happy ${Math.floor(s.happiness)} energy ${Math.floor(s.energy)}`,
+    })
+  }
+  const renameBuddy = () => {
+    api.ui.dialog.replace(() => (
+      <api.ui.DialogPrompt
+        title="Rename buddy"
+        placeholder="New name (max 20 chars)"
+        onConfirm={async (value) => {
+          const s = await persistence.load()
+          if (!s) return
+          const next = rename(s, value)
+          await persistence.save(next)
+          api.ui.toast({ variant: "success", title: "Renamed", message: `Now called ${next.name}.` })
+        }}
+        onCancel={() => {}}
+      />
+    ))
+  }
+  const switchBuddy = () => {
+    const options = SPECIES.map((sp) => ({
+      title: sp,
+      value: sp,
+      onSelect: async () => {
+        const s = await persistence.load()
+        if (!s) return
+        const next = switchSpecies(s, sp)
+        await persistence.save(next)
+        api.ui.toast({ variant: "success", title: "Morphed", message: `Now a ${sp}.` })
+        api.ui.dialog.clear()
+      },
+    }))
+    api.ui.dialog.replace(() => (
+      <api.ui.DialogSelect
+        title="Switch species"
+        options={options}
+        onSelect={() => {}}
+      />
+    ))
+  }
+
+  api.keymap.registerLayer({
+    commands: [
+      {
+        namespace: "palette",
+        name: "buddy.feed",
+        title: "Feed buddy",
+        slashName: "buddy-feed",
+        category: "Buddy",
+        run() {
+          api.ui.dialog.clear()
+          void feedBuddy()
+        },
+      },
+      {
+        namespace: "palette",
+        name: "buddy.play",
+        title: "Play with buddy",
+        slashName: "buddy-play",
+        category: "Buddy",
+        run() {
+          api.ui.dialog.clear()
+          void playBuddy()
+        },
+      },
+      {
+        namespace: "palette",
+        name: "buddy.rest",
+        title: "Buddy rests",
+        slashName: "buddy-rest",
+        category: "Buddy",
+        run() {
+          api.ui.dialog.clear()
+          void restBuddy()
+        },
+      },
+      {
+        namespace: "palette",
+        name: "buddy.status",
+        title: "Show buddy status",
+        slashName: "buddy",
+        slashAliases: ["buddy-status"],
+        category: "Buddy",
+        run() {
+          api.ui.dialog.clear()
+          void statusBuddy()
+        },
+      },
+      {
+        namespace: "palette",
+        name: "buddy.rename",
+        title: "Rename buddy",
+        slashName: "buddy-rename",
+        category: "Buddy",
+        run() {
+          renameBuddy()
+        },
+      },
+      {
+        namespace: "palette",
+        name: "buddy.switch",
+        title: "Switch buddy species",
+        slashName: "buddy-switch",
+        category: "Buddy",
+        run() {
+          switchBuddy()
+        },
+      },
+    ],
+    bindings: [],
+  })
+
   api.event.on("session.idle", async () => {
     const s = await persistence.load()
     if (!s) return
@@ -148,9 +281,5 @@ const tui: TuiPlugin = async (api) => {
   })
 }
 
-const plugin: TuiPluginModule & { id: string } = {
-  id: "opencode-buddy",
-  tui,
-}
-
+const plugin = { id: "opencode-buddy", tui }
 export default plugin
