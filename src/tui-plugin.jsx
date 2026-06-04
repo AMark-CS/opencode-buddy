@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import { createSignal, createMemo, onCleanup, For } from "solid-js"
+import { createSignal, createMemo, onCleanup } from "solid-js"
 import * as persistence from "./persistence.js"
 import {
   tick as tickState,
@@ -112,9 +112,12 @@ function View(props) {
   return (
     <box>
       <text fg={theme().accent}>{spinner()}  {current() ? current().name + " the " + current().species : "BUDDY"}</text>
-      <For each={lines()}>
-        {(line) => <text fg={speciesColor()}>{stripAnsi(line)}</text>}
-      </For>
+      <text fg={speciesColor()}>{stripAnsi(lines()[0] ?? "")}</text>
+      <text fg={speciesColor()}>{stripAnsi(lines()[1] ?? "")}</text>
+      <text fg={speciesColor()}>{stripAnsi(lines()[2] ?? "")}</text>
+      <text fg={speciesColor()}>{stripAnsi(lines()[3] ?? "")}</text>
+      <text fg={speciesColor()}>{stripAnsi(lines()[4] ?? "")}</text>
+      <text fg={speciesColor()}>{stripAnsi(lines()[5] ?? "")}</text>
       <text fg={theme().textMuted}>hunger {barStr(current()?.hunger ?? 0)} {Math.floor(current()?.hunger ?? 0)}</text>
       <text fg={theme().textMuted}>happy  {barStr(current()?.happiness ?? 0)} {Math.floor(current()?.happiness ?? 0)}</text>
       <text fg={theme().textMuted}>energy {barStr(current()?.energy ?? 0)} {Math.floor(current()?.energy ?? 0)}</text>
