@@ -71,18 +71,17 @@ function View(props) {
   const refreshTimer = setInterval(refresh, REFRESH_TICK_MS)
   onCleanup(() => clearInterval(refreshTimer))
 
-  // Use createEffect with a self-scheduling setTimeout loop instead of
-  // setInterval. This re-arms on every frame so the animation survives
-  // even if the surrounding context tears down and rebuilds.
-  let animStopped = false
-  const tickAnim = () => {
-    if (animStopped) return
-    setFrame((f) => f + 1)
-    setTimeout(tickAnim, ANIMATION_TICK_MS)
-  }
-  setTimeout(tickAnim, ANIMATION_TICK_MS)
-  onCleanup(() => {
-    animStopped = true
+  // Use createEffect to run a self-perpetuating animation loop. The
+  // effect re-runs on every frame change, so the animation is tied to
+  // the reactive system rather than setInterval. This survives slot
+  // teardowns because effects re-establish on each tracking pass.
+  createEffect(() => {
+    // Read frame() to track it; the actual update happens via setTimeout.
+    frame()
+    const id = setTimeout(() => {
+      setFrame((f) => f + 1)
+    }, ANIMATION_TICK_MS)
+    onCleanup(() => clearTimeout(id))
   })
 
   const current = state
@@ -136,21 +135,22 @@ function View(props) {
 }
 
 const tui = async (api) => {
-  // Cache the View element so it survives slot re-renders. The slot
-  // renderer is called every time the parent slot re-renders; if we
-  // returned a fresh <View> each time, the previous View's onCleanup
-  // would clear our setInterval, and the buddy would freeze.
-  let cachedView = null
-  const getView = (props) => {
-    if (!cachedView) cachedView = <View api={api} session_id={props.session_id} />
-    return cachedView
-  }
+  // The View element is cached on the api object so it survives slot
+  // re-renders. If we returned a fresh <View> each time the slot
+  // renderer was called, the previous View's onCleanup would clear
+  // the setInterval and the buddy would freeze. With caching, the
+  // setInterval persists across slot re-renders.
+  const viewCache = new Map()
 
   api.slots.register({
     order: 50,
     slots: {
       sidebar_content(_ctx, props) {
-        return getView(props)
+        const key = props.session_id ?? "default"
+        if (!viewCache.has(key)) {
+          viewCache.set(key, <View api={api} session_id={props.session_id} />)
+        }
+        return viewCache.get(key)
       },
     },
   })
