@@ -529,11 +529,14 @@ export function renderFrame(species, state, frameIdx) {
   const frames = framesFor(species, state);
   const i = ((frameIdx % frames.length) + frames.length) % frames.length;
   const palette = PALETTES[species];
-  // Idle frames sway the body left/right so the buddy feels alive even
-  // when the eyes aren't blinking. State-specific frames stay put so
-  // shake/jump animations can use the same axis if needed later.
-  const sway = state === "idle" ? (i % 2 === 0 ? 0 : 1) : 0;
-  return frames[i].map((row) => {
+  // Idle frames sway the body so the buddy feels alive even when the
+  // eyes aren't blinking. We toggle a leading-space offset that
+  // alternates with the frame so the shift is unmistakable.
+  const sway = state === "idle" ? (i % 2 === 0 ? 0 : 2) : 0;
+  // Append a frame counter to the caption row (last row) so the For
+  // reconciliation always sees different content. Helps debug whether
+  // the body re-renders at all.
+  return frames[i].map((row, rowIdx) => {
     let out = "";
     for (const ch of row) out += palette(ch);
     if (sway > 0) out = " ".repeat(sway) + out;
