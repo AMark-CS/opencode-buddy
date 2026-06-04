@@ -11,6 +11,7 @@
   },
   "files": [
     "src",
+    "scripts",
     "README.md",
     "LICENSE"
   ],
@@ -28,6 +29,9 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.mjs"
   },
   "author": "AMark-CS",
   "license": "MIT",

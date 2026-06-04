@@ -34,19 +34,22 @@ Requires opencode ≥ 1.15.
 npm install -g opencode-buddy
 ```
 
-Then enable it for both the server (tool registry) and the TUI (sidebar). The buddy ships two plugin entrypoints — `opencode-buddy` (server) and `opencode-buddy/tui` (TUI) — that must be declared in two different config files:
+The `postinstall` script automatically registers both plugin entrypoints in your opencode config:
 
-**`~/.config/opencode/opencode.json`** (server plugin)
+- `opencode-buddy` → `~/.config/opencode/opencode.json` (server plugin)
+- `opencode-buddy/tui` → `~/.config/opencode/tui.json` (TUI plugin)
 
-```json
+If you have those config files as JSONC (with comments), the script skips them — add the entries manually:
+
+```jsonc
+// ~/.config/opencode/opencode.json
 {
   "plugin": ["opencode-buddy"]
 }
 ```
 
-**`~/.config/opencode/tui.json`** (TUI plugin — newly created if it doesn't exist)
-
 ```json
+// ~/.config/opencode/tui.json
 {
   "$schema": "https://opencode.ai/tui.json",
   "plugin": ["opencode-buddy/tui"]
@@ -206,7 +209,7 @@ State is held at `~/.config/opencode-buddy/state.json`. `~/.config` resolves via
 npm uninstall -g opencode-buddy
 ```
 
-Then remove `"opencode-buddy"` from `opencode.json` and `"opencode-buddy/tui"` from `tui.json`.
+Then remove `"opencode-buddy"` from `opencode.json` and `"opencode-buddy/tui"` from `tui.json` (the npm uninstall doesn't auto-edit user config).
 
 ## License
 
