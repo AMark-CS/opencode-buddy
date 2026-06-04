@@ -106,9 +106,12 @@ function View(props) {
     return theme().text
   }
 
+  const SPINNER = ["\u25D0", "\u25D3", "\u25D1", "\u25D2"]
+  const spinner = () => SPINNER[frame() % SPINNER.length]
+
   return (
     <box>
-      <text fg={theme().accent}>{current() ? current().name + " the " + current().species : "BUDDY"}</text>
+      <text fg={theme().accent}>{spinner()}  {current() ? current().name + " the " + current().species : "BUDDY"}</text>
       <For each={lines()}>
         {(line) => <text fg={speciesColor()}>{stripAnsi(line)}</text>}
       </For>

@@ -500,7 +500,7 @@ const PALETTES = {
 export const SPECIES = ["duck", "cat", "dragon", "axolotl", "robot", "ghost"];
 export const STATES = ["idle", "working", "celebrating", "scared", "sleeping"];
 
-const FRAME_INTERVAL_MS = 600;
+const FRAME_INTERVAL_MS = 300;
 
 export function framesFor(species, state) {
   const list = FRAMES[species]?.[state] ?? FRAMES.duck.idle;
@@ -529,9 +529,14 @@ export function renderFrame(species, state, frameIdx) {
   const frames = framesFor(species, state);
   const i = ((frameIdx % frames.length) + frames.length) % frames.length;
   const palette = PALETTES[species];
+  // Idle frames sway the body left/right so the buddy feels alive even
+  // when the eyes aren't blinking. State-specific frames stay put so
+  // shake/jump animations can use the same axis if needed later.
+  const sway = state === "idle" ? (i % 2 === 0 ? 0 : 1) : 0;
   return frames[i].map((row) => {
     let out = "";
     for (const ch of row) out += palette(ch);
+    if (sway > 0) out = " ".repeat(sway) + out;
     // Auto-pad to FRAME_WIDTH so off-by-one spacing in raw art doesn't
     // cause render jitter.
     const visible = out.replace(/\x1b\[[0-9;]*m/g, "").length;
