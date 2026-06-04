@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import { createSignal, createMemo, onCleanup } from "solid-js"
+import { createSignal, createMemo, createEffect, onCleanup } from "solid-js"
 import * as persistence from "./persistence.js"
 import {
   tick as tickState,
@@ -71,10 +71,19 @@ function View(props) {
   const refreshTimer = setInterval(refresh, REFRESH_TICK_MS)
   onCleanup(() => clearInterval(refreshTimer))
 
-  const animTimer = setInterval(() => {
+  // Use createEffect with a self-scheduling setTimeout loop instead of
+  // setInterval. This re-arms on every frame so the animation survives
+  // even if the surrounding context tears down and rebuilds.
+  let animStopped = false
+  const tickAnim = () => {
+    if (animStopped) return
     setFrame((f) => f + 1)
-  }, ANIMATION_TICK_MS)
-  onCleanup(() => clearInterval(animTimer))
+    setTimeout(tickAnim, ANIMATION_TICK_MS)
+  }
+  setTimeout(tickAnim, ANIMATION_TICK_MS)
+  onCleanup(() => {
+    animStopped = true
+  })
 
   const current = state
   const species = () => {
@@ -127,11 +136,21 @@ function View(props) {
 }
 
 const tui = async (api) => {
+  // Cache the View element so it survives slot re-renders. The slot
+  // renderer is called every time the parent slot re-renders; if we
+  // returned a fresh <View> each time, the previous View's onCleanup
+  // would clear our setInterval, and the buddy would freeze.
+  let cachedView = null
+  const getView = (props) => {
+    if (!cachedView) cachedView = <View api={api} session_id={props.session_id} />
+    return cachedView
+  }
+
   api.slots.register({
     order: 50,
     slots: {
       sidebar_content(_ctx, props) {
-        return <View api={api} session_id={props.session_id} />
+        return getView(props)
       },
     },
   })
