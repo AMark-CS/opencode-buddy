@@ -2,6 +2,8 @@
 
 A virtual ASCII pet companion that lives in the opencode TUI sidebar. Hatches, feeds, plays, and reacts to what you're coding — all without leaving opencode.
 
+[Demo video](assets/buddy-demo.mov)
+
 ```
 ┌──────────────────────────┐
 │  opencode TUI            │
@@ -25,6 +27,8 @@ A virtual ASCII pet companion that lives in the opencode TUI sidebar. Hatches, f
 ```
 
 The buddy renders inside the TUI sidebar, reacts to your coding sessions (cheering when a turn finishes, getting scared on errors, falling asleep when low on energy), and can be controlled via slash commands typed directly in the prompt.
+
+> **Watch the demo:** [assets/buddy-demo.mov](assets/buddy-demo.mov) — a 640×480 screen recording showing the buddy in the sidebar with slash commands in action.
 
 ## Install
 
