@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import { createSignal, createMemo, createEffect, onCleanup } from "solid-js"
+import { createSignal, createMemo, onCleanup } from "solid-js"
 import * as persistence from "./persistence.js"
 import {
   tick as tickState,
@@ -20,8 +20,8 @@ const REFRESH_TICK_MS = 1500
 function View(props) {
   const api = props.api
   const theme = () => api.theme.current
+  const frame = props.frame
   const [state, setState] = createSignal(null)
-  const [frame, setFrame] = createSignal(0)
   const [lastMtime, setLastMtime] = createSignal(0)
   const [tick, setTick] = createSignal(0)
 
@@ -71,24 +71,17 @@ function View(props) {
   const refreshTimer = setInterval(refresh, REFRESH_TICK_MS)
   onCleanup(() => clearInterval(refreshTimer))
 
-  // Use createEffect to run a self-perpetuating animation loop. The
-  // effect re-runs on every frame change, so the animation is tied to
-  // the reactive system rather than setInterval. This survives slot
-  // teardowns because effects re-establish on each tracking pass.
-  createEffect(() => {
-    // Read frame() to track it; the actual update happens via setTimeout.
-    frame()
-    const id = setTimeout(() => {
-      setFrame((f) => f + 1)
-    }, ANIMATION_TICK_MS)
-    onCleanup(() => clearTimeout(id))
-  })
+  // The frame signal lives at the plugin level (see tui() below). It
+  // is passed in as a prop so this View can read its current value
+  // without owning a timer of its own.
 
   const current = state
   const species = () => {
     const v = current()
     return v ? v.species : "duck"
   }
+  // Only animate when the buddy is awake (not sleeping). Sleeping
+  // buddies hold a single frame so the user can see they're resting.
   const buddyState = () => {
     const v = current()
     return v ? v.state : "idle"
@@ -135,11 +128,23 @@ function View(props) {
 }
 
 const tui = async (api) => {
-  // The View element is cached on the api object so it survives slot
-  // re-renders. If we returned a fresh <View> each time the slot
-  // renderer was called, the previous View's onCleanup would clear
-  // the setInterval and the buddy would freeze. With caching, the
-  // setInterval persists across slot re-renders.
+  // The animation timer lives at the plugin level so it survives View
+  // remounts. We expose a single global frame counter via a SolidJS
+  // signal stored on the api object, which every View can read.
+  // This decouples the animation loop from any individual View's
+  // lifecycle.
+  const [getFrame, setFrame] = createSignal(0)
+  api.__buddyFrame = { getFrame, setFrame }
+  setInterval(async () => {
+    // Read current state from disk. If the buddy is sleeping or has
+    // very low energy, freeze the frame so animation visually pauses
+    // — a sleeping buddy should not be flickering.
+    const s = await persistence.load()
+    const sleeping = s && (s.state === "sleeping" || s.energy < 20)
+    if (!sleeping) setFrame((f) => f + 1)
+  }, ANIMATION_TICK_MS)
+
+  // Cache the View element so slot re-renders don't recreate it.
   const viewCache = new Map()
 
   api.slots.register({
@@ -148,7 +153,7 @@ const tui = async (api) => {
       sidebar_content(_ctx, props) {
         const key = props.session_id ?? "default"
         if (!viewCache.has(key)) {
-          viewCache.set(key, <View api={api} session_id={props.session_id} />)
+          viewCache.set(key, <View api={api} session_id={props.session_id} frame={getFrame} />)
         }
         return viewCache.get(key)
       },
