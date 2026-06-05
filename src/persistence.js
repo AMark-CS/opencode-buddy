@@ -20,6 +20,7 @@ export async function save(state) {
   await fs.mkdir(DIR, { recursive: true });
   const tmp = FILE + ".tmp";
   await fs.writeFile(tmp, JSON.stringify(state, null, 2));
+  await fs.unlink(FILE).catch(() => {});
   await fs.rename(tmp, FILE);
 }
 
